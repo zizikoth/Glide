@@ -18,7 +18,7 @@ class RequestManager private constructor() {
 
 
     companion object {
-        val INSTANCE: RequestManager by lazy {
+        val INSTANCE: RequestManager by lazy(mode = LazyThreadSafetyMode.SYNCHRONIZED) {
             val manager = RequestManager()
             manager.start()
             manager
