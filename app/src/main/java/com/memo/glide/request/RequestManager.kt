@@ -58,7 +58,7 @@ class RequestManager private constructor() {
      * 关闭线程
      */
     private fun stop() {
-        if (!dispatchers.isNullOrEmpty()) {
+        if (dispatchers.isNotEmpty()) {
             for (dispatcher: RequestDispatcher in dispatchers) {
                 //如果线程没有被中断 中断线程
                 if (!dispatcher.isInterrupted) {

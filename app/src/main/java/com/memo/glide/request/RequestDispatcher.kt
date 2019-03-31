@@ -41,13 +41,14 @@ class RequestDispatcher(requestQueue: BlockingQueue<BitmapRequest>) : Thread() {
                 showPlaceHolder(bitmapRequest)
                 //1、获取bitmap 先从缓存中获取 没有再从网络获取
                 val bitmap: Bitmap? = getBitmap(bitmapRequest)
-                //生命周期3、此时已经把缓存放入 那么把缓存的key uriMd5和Activity结合
+                //2、通过Handler到ui线程展示图片
+                showImageInUiThread(bitmapRequest, bitmap)
+                //生命周期
+                //3、此时已经把缓存放入 那么把缓存的key uriMd5和Activity结合
                 val uriMd5 = bitmapRequest.getUriMd5()
                 uriMd5?.let {
                     LifeCycleObservable.instance.add(bitmapRequest.getActivity().hashCode(), uriMd5)
                 }
-                //2、通过Handler到ui线程展示图片
-                showImageInUiThread(bitmapRequest, bitmap)
             } catch (e: Exception) {
                 e.printStackTrace()
             }

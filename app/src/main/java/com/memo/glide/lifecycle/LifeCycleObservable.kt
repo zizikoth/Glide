@@ -62,5 +62,4 @@ class LifeCycleObservable private constructor() {
 
     }
 
-
 }
