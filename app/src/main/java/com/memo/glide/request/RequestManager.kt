@@ -12,12 +12,16 @@ import java.util.concurrent.LinkedBlockingQueue
  */
 class RequestManager private constructor() {
 
+
     /*** 请求调度 给予多个来解决并发问题 ***/
-    private var dispatchers: ArrayList<RequestDispatcher> = arrayListOf()
+    private val dispatchers: ArrayList<RequestDispatcher> = arrayListOf()
+
 
     companion object {
         val INSTANCE: RequestManager by lazy {
-            RequestManager().start()
+            val manager = RequestManager()
+            manager.start()
+            manager
         }
     }
 
@@ -39,7 +43,7 @@ class RequestManager private constructor() {
     /**
      * 开启请求，通过RequestDispatcher进行调度 获取bitmap
      */
-    private fun start():RequestManager {
+    private fun start() {
         stop()
         val threadCount: Int = Runtime.getRuntime().availableProcessors()
         for (i in 0 until threadCount) {
@@ -48,22 +52,21 @@ class RequestManager private constructor() {
             requestDispatcher.start()
             dispatchers.add(requestDispatcher)
         }
-        return this
     }
 
     /**
      * 关闭线程
      */
     private fun stop() {
-        if (dispatchers.size > 0) {
+        if (!dispatchers.isNullOrEmpty()) {
             for (dispatcher: RequestDispatcher in dispatchers) {
                 //如果线程没有被中断 中断线程
                 if (!dispatcher.isInterrupted) {
                     dispatcher.interrupt()
                 }
             }
+            dispatchers.clear()
         }
     }
-
 
 }

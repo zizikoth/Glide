@@ -48,7 +48,7 @@ public class DoubleCacheManager {
     /**
      * 记录硬盘缓存与内存缓存起效标志
      */
-    private static int model = 0;
+    private static int model = ALL_ALLOW;
     /**
      * 硬盘缓存管理类
      */
@@ -60,15 +60,15 @@ public class DoubleCacheManager {
     /**
      * 上下文
      */
-    private static Context mContext;
+    private static Context mAppContext;
 
     /**
      * 初始化缓存管理
      *
-     * @param context 上下文
+     * @param appContext 上下文
      */
-    public static void init(Context context) {
-        mContext = context;
+    public static void init(Context appContext) {
+        mAppContext = appContext;
         //根据传入的标志，初始化内存缓存以及硬盘缓存，默认开启是同时使用
         switch (model) {
             case ALL_ALLOW:
@@ -102,13 +102,13 @@ public class DoubleCacheManager {
      */
     private static void initDiskLruCacheManager() {
         if (maxSizeForDiskLruCache > 0 && !TextUtils.isEmpty(dirNameForDiskLruCache)) {
-            diskLruCacheManager = new DiskLruCacheManager(mContext, dirNameForDiskLruCache, maxSizeForDiskLruCache * 1024 * 1024);
+            diskLruCacheManager = new DiskLruCacheManager(mAppContext, dirNameForDiskLruCache, maxSizeForDiskLruCache * 1024 * 1024);
         } else if (maxSizeForDiskLruCache > 0) {
-            diskLruCacheManager = new DiskLruCacheManager(mContext, maxSizeForDiskLruCache * 1024 * 1024);
+            diskLruCacheManager = new DiskLruCacheManager(mAppContext, maxSizeForDiskLruCache * 1024 * 1024);
         } else if (!TextUtils.isEmpty(dirNameForDiskLruCache)) {
-            diskLruCacheManager = new DiskLruCacheManager(mContext, dirNameForDiskLruCache);
+            diskLruCacheManager = new DiskLruCacheManager(mAppContext, dirNameForDiskLruCache);
         } else {
-            diskLruCacheManager = new DiskLruCacheManager(mContext);
+            diskLruCacheManager = new DiskLruCacheManager(mAppContext);
         }
     }
 
@@ -367,14 +367,12 @@ public class DoubleCacheManager {
      */
     public static void deleteFile(String dirName) {
         if (diskLruCacheManager != null) {
-            diskLruCacheManager.deleteFile(mContext, dirName);
+            diskLruCacheManager.deleteFile(mAppContext, dirName);
         }
     }
 
     /**
      * 获取缓存大小——内存缓存+硬盘缓存
-     *
-     * @return
      */
     public static int size() {
         int size = 0;

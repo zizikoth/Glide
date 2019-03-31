@@ -98,6 +98,5 @@ class BitmapRequest(private var activity: Activity) {
 	override fun toString(): String {
 		return "BitmapRequest(activity=$activity, imageUrl=$imageUrl, uriMd5=$uriMd5, mSoftImageView=$mSoftImageView, requestListener=$requestListener, placeHolderRes=$placeHolderRes, errorRes=$errorRes)"
 	}
-	
-	
+
 }

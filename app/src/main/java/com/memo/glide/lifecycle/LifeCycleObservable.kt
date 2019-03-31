@@ -13,9 +13,9 @@ import java.util.*
  */
 class LifeCycleObservable private constructor() {
 
-    private val activityMap: HashMap<Int, ArrayList<String>> = hashMapOf()
-    private val addCode = StringBuilder()
-    private val removeCode = StringBuilder()
+    private val activityMap: HashMap<Int, ArrayList<String>> by lazy { hashMapOf<Int, ArrayList<String>>() }
+    private val addCode: StringBuilder by lazy { StringBuilder() }
+    private val removeCode: StringBuilder by lazy { StringBuilder() }
 
     companion object {
         val instance: LifeCycleObservable by lazy(mode = LazyThreadSafetyMode.SYNCHRONIZED) {
@@ -46,14 +46,14 @@ class LifeCycleObservable private constructor() {
             for (imageUrlMd5 in it) {
                 //只是从内存中将所有的缓存获取
                 val bitmap = DoubleCacheManager.get(imageUrlMd5, DoubleCacheManager.LRU)
-                DoubleCacheManager.remove(imageUrlMd5)
+                DoubleCacheManager.remove(imageUrlMd5, DoubleCacheManager.LRU)
                 //回收
                 if (bitmap != null && !bitmap.isRecycled) {
                     bitmap.recycle()
                 }
                 removeCode.append("activityCode = $activityCode  imageUrlMd5 = $imageUrlMd5 \n")
             }
-            //系统回收
+            //系统回收  有些手机会执行 有些手机不会执行 可以自己手动GC查看内存
             System.gc()
             //目前添加的必删除的多
             log("\nremoveCode \n$removeCode")

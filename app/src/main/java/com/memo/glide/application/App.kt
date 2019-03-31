@@ -1,6 +1,7 @@
 package com.memo.glide.application
 
 import android.app.Application
+import android.content.Context
 import com.memo.glide.cache.DoubleCacheManager
 
 /**
@@ -12,8 +13,14 @@ import com.memo.glide.cache.DoubleCacheManager
  */
 class App : Application() {
 
+    companion object {
+        lateinit var appContext: Context
+    }
+
+
     override fun onCreate() {
         super.onCreate()
+        appContext = this
         DoubleCacheManager.init(this)
     }
 }

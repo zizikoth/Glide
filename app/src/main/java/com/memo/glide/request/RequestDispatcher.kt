@@ -8,6 +8,7 @@ import android.widget.ImageView
 import com.memo.glide.cache.DoubleCacheManager
 import com.memo.glide.lifecycle.LifeCycleObservable
 import com.memo.glide.utils.MD5Utils
+import com.memo.glide.utils.log
 import java.io.InputStream
 import java.net.URL
 import java.net.URLConnection
@@ -37,7 +38,6 @@ class RequestDispatcher(requestQueue: BlockingQueue<BitmapRequest>) : Thread() {
             //获取当前的任务
             try {
                 val bitmapRequest: BitmapRequest = queue.take()
-                //现在开始加载图片 先展示loading占位图
                 showPlaceHolder(bitmapRequest)
                 //1、获取bitmap 先从缓存中获取 没有再从网络获取
                 val bitmap: Bitmap? = getBitmap(bitmapRequest)
@@ -54,17 +54,19 @@ class RequestDispatcher(requestQueue: BlockingQueue<BitmapRequest>) : Thread() {
         }
     }
 
-
     /**
-     * 给图片设置加载占位图
+     * 显示占位图
      */
-    private fun showPlaceHolder(bitmapRequest: BitmapRequest) {
-        val placeHolder = bitmapRequest.getPlaceHolder()
-        val imageView = bitmapRequest.getImageView()
-        if (imageView != null && placeHolder != null) {
-            imageView.setImageResource(placeHolder)
+    private fun showPlaceHolder(request: BitmapRequest) {
+        request.getPlaceHolder()?.let { placeHolder ->
+            request.getImageView()?.let { imageView ->
+                handler.post {
+                    imageView.setImageResource(placeHolder)
+                }
+            }
         }
     }
+
 
     /**
      * 从缓存中获取bitmap
@@ -72,12 +74,14 @@ class RequestDispatcher(requestQueue: BlockingQueue<BitmapRequest>) : Thread() {
     private fun getBitmap(bitmapRequest: BitmapRequest): Bitmap? {
         //从缓存中获取bitmap 先从内存中获取 再从磁盘中获取
         var bitmap: Bitmap? = DoubleCacheManager.get(bitmapRequest.getUriMd5())
+        log("缓存读取成功？ ${bitmap != null} ")
         if (bitmap != null) {
             return bitmap
+        } else {
+            //从网络中获取
+            bitmap = downloadImage(bitmapRequest.getImageUrl())
+            return bitmap
         }
-        //从网络中获取
-        bitmap = downloadImage(bitmapRequest.getImageUrl())
-        return bitmap
     }
 
     /**
@@ -96,7 +100,9 @@ class RequestDispatcher(requestQueue: BlockingQueue<BitmapRequest>) : Thread() {
             bitmap = BitmapFactory.decodeStream(inputStream)
             //！！！将图片放入缓存
             if (bitmap != null) {
-                DoubleCacheManager.put(MD5Utils.toMD5(uri), bitmap)
+                val key: String = MD5Utils.toMD5(uri)
+                log("key = $key 存入缓存")
+                DoubleCacheManager.put(key, bitmap)
             }
         } catch (e: java.lang.Exception) {
             e.printStackTrace()
@@ -119,24 +125,28 @@ class RequestDispatcher(requestQueue: BlockingQueue<BitmapRequest>) : Thread() {
         //tag是否匹配
         handler.post {
             val imageView: ImageView? = request.getImageView()
-            val uriMd5: String? = request.getUriMd5()
             val errorRes: Int? = request.getError()
-            if (imageView != null && bitmap != null && imageView.tag == uriMd5) {
-                imageView.setImageBitmap(bitmap)
-            }
-            //回调
-            request.getRequestListener()?.let {
-                if (bitmap == null) {
-                    it.onException()
-                    //设置图片错误占位图
-                    if (errorRes != null) {
-                        imageView?.setImageResource(errorRes)
-                    }
+            if (imageView != null && imageView.tag == request.getUriMd5()) {
+                if (bitmap != null) {
+                    imageView.setImageBitmap(bitmap)
                 } else {
-                    it.onResourceReady(bitmap)
+                    errorRes?.let {
+                        imageView.setImageResource(it)
+                    }
                 }
             }
+        }
 
+        request.getRequestListener()?.let {
+            if (bitmap != null) {
+                handler.post {
+                    it.onResourceReady(bitmap)
+                }
+            } else {
+                handler.post {
+                    it.onException()
+                }
+            }
         }
     }
 
